@@ -1,0 +1,4 @@
+#package	version	architecture	installed-size	sha256	file	source-repo
+mica-alpha	2.0	all	4	727afdf79fed6b5c558dc73ed8a2d71ad1eb15454f4b18dfe2bc361bd4d6c304	pool/mica-alpha_2.0_all.deb	mica-build
+mica-zeta	1.0-1	amd64	4	a023a1a2c357775d71c59906996bdda931596560931237cc66bbc9816ba57258	pool/mica-zeta_1.0-1_amd64.deb	mica-core
+mica-zeta	1.0-2	amd64	4	32f1e31502165642646d33f2f6e1c5cda445a549a4cb08739f91b372a9010987	pool/mica-zeta_1.0-2_amd64.deb	mica-core

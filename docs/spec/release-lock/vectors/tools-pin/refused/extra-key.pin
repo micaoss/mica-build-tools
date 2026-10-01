@@ -1,0 +1,4 @@
+# mica-tools-pin v1
+REPOSITORY=mica-build-tools
+COMMIT=0123456789abcdef0123456789abcdef01234567
+RELEASE=20260920-0800

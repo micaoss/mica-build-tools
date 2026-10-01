@@ -1,0 +1,5 @@
+# mica-tools-pin v1
+# Known and deliberate at this commit: it carries <defect>, inert and
+# pinned here rather than silently carried.
+REPOSITORY=mica-build-tools
+COMMIT=0123456789abcdef0123456789abcdef01234567
