@@ -1,0 +1,10 @@
+drwxr-xr-x ./
+drwxr-xr-x ./usr/
+drwxr-xr-x ./usr/bin/
+drwxr-xr-x ./usr/share/
+drwxr-xr-x ./usr/share/mica-test/
+drwxr-xr-x ./usr/share/mica-test/deep/
+drwxr-xr-x ./usr/share/mica-test/deep/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/
+-rw-r--r-- ./usr/share/mica-test/deep/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+-rwxr-xr-x ./usr/share/mica-test/file
+lrwxrwxrwx ./usr/bin/mica-test

@@ -1,0 +1,6 @@
+# mica-lock v1
+# third-party inputs of a repository that builds for armhf
+image	upstream	debian:trixie-slim	armhf	docker.io/library/debian:trixie-slim@sha256:1111111111111111111111111111111111111111111111111111111111111111
+source	bun	amd64	1.4.2	3333333333333333333333333333333333333333333333333333333333333333	https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-x64.zip
+source	busybox	all	1.37.0	4444444444444444444444444444444444444444444444444444444444444444	https://busybox.net/downloads/busybox-1.37.0.tar.bz2
+source	node	armhf	24.10.0	5555555555555555555555555555555555555555555555555555555555555555	https://nodejs.org/dist/v24.10.0/node-v24.10.0-linux-armv7l.tar.xz

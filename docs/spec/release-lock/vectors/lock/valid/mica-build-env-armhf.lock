@@ -1,0 +1,9 @@
+# mica-lock v1
+release	mica-build-env	20260914-2042	0123456789abcdef0123456789abcdef01234567
+image	mica-build-env	base	amd64	ghcr.io/micaoss/mica-build-env@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1
+image	mica-build-env	base	arm64	ghcr.io/micaoss/mica-build-env@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb2
+image	mica-build-env	base	armhf	ghcr.io/micaoss/mica-build-env@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb3
+image	mica-build-env	base	index	ghcr.io/micaoss/mica-build-env:base.20260914-2042@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0
+image	upstream	debian:trixie-slim	amd64	docker.io/library/debian:trixie-slim@sha256:7777777777777777777777777777777777777777777777777777777777777777
+image	upstream	debian:trixie-slim	arm64	docker.io/library/debian:trixie-slim@sha256:7777777777777777777777777777777777777777777777777777777777777777
+image	upstream	debian:trixie-slim	armhf	docker.io/library/debian:trixie-slim@sha256:7777777777777777777777777777777777777777777777777777777777777777

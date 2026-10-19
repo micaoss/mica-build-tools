@@ -1,0 +1,9 @@
+Package: mica-test
+Version: 1.0.0-1
+Architecture: all
+Maintainer: Mica <mica@example.org>
+Section: misc
+Priority: optional
+Description: a fixture
+ two lines
+Mica-Source-Repo: mica-build-tools

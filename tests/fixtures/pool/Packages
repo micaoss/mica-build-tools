@@ -1,0 +1,55 @@
+Package: mica-alpha
+Version: 2.0
+Architecture: all
+Maintainer: Mica <mica@example.org>
+Installed-Size: 4
+Conflicts: beta
+Breaks: gamma
+Replaces: beta
+Provides: alpha
+Filename: pool/mica-alpha_2.0_all.deb
+Size: 832
+MD5sum: d54635bba3572196f3c61995a1ef3c69
+SHA1: b5ab5aa9bd806b60e50f51ff3a62f56e0d11f20c
+SHA256: 727afdf79fed6b5c558dc73ed8a2d71ad1eb15454f4b18dfe2bc361bd4d6c304
+Section: misc
+Description: alpha
+Mica-Source-Repo: mica-build
+
+Package: mica-zeta
+Version: 1.0-1
+Architecture: amd64
+Maintainer: Mica <mica@example.org>
+Installed-Size: 4
+Filename: pool/mica-zeta_1.0-1_amd64.deb
+Size: 840
+MD5sum: cddd78590d223f17b53872179c6bc0c6
+SHA1: febba12c30f95e8b39556804f3f89f1801a871da
+SHA256: a023a1a2c357775d71c59906996bdda931596560931237cc66bbc9816ba57258
+Section: misc
+Priority: optional
+Description: zeta
+ first
+ .
+ second
+A-Extra: a
+Mica-Source-Repo: mica-core
+X-Extra: b
+
+Package: mica-zeta
+Version: 1.0-2
+Architecture: amd64
+Maintainer: Mica <mica@example.org>
+Installed-Size: 4
+Pre-Depends: dpkg
+Depends: libc6 (>= 2.36)
+Filename: pool/mica-zeta_1.0-2_amd64.deb
+Size: 852
+MD5sum: 61f16c6980a5381500bda75eb146563f
+SHA1: 46814b0a4b6e8795906bd75908c29e7553729aaf
+SHA256: 32f1e31502165642646d33f2f6e1c5cda445a549a4cb08739f91b372a9010987
+Multi-Arch: foreign
+Homepage: https://example.org
+Description: zeta two
+Mica-Source-Repo: mica-core
+

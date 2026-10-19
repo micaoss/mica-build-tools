@@ -1,0 +1,4 @@
+_out/
+.tmp/
+node_modules/
+/repos/

@@ -1,0 +1,32 @@
+// The library (design section 4): what the commands are made of. A TypeScript consumer imports it through the
+// path alias `@mica/build-tools` onto repos/mica-build-tools/src/index.ts and runs the same code the commands run.
+export { Refused, ToolError, UsageError } from './errors.ts'
+export { Checker, partition, rpartition, type Row } from './locks/rules.ts'
+export { checkLock, KIND_COLUMNS, LOCK_HEADER, type Lock } from './locks/lock.ts'
+export { collect, type Collected } from './locks/collect.ts'
+export { checkUpstream, gitField, sourceField } from './locks/upstream.ts'
+export {
+  checkLocks, checkPins, modeOf, readCommitPin, readPin, readToolsPin,
+  TOOLS_PIN_HEADER, type Input, type Mode, type Pin,
+} from './locks/pins.ts'
+export { buildArgs, checkDockerfile, checkDockerfiles, resolve as resolveImage } from './locks/from.ts'
+export { assetBase, latestOf, localLock, moveLock, parseSums, resolveMove, verifyLocks, writeMove, type Move } from './locks/releases.ts'
+export { updateLocks, type Update } from './locks/update.ts'
+export { check as reposCheck, checkoutPinned, ensure as reposEnsure, get as reposGet, lookup as reposLookup, mirrorOf, mirrorUrl, downloadFrom, offline, streamToFile } from './repos/cache.ts'
+export { controlEntries, controlFields, controlText, installedPath, payloadEntries, payloadMember, tarEntries, type TarEntry } from './deb/archive.ts'
+export { unxz } from './deb/xz.ts'
+export { version } from './deb/version.ts'
+export { formatControl, indexPool, parseControl, writeIndex } from './pool/index.ts'
+export { blob as ociBlob, blobToFile as ociBlobToFile, manifest as ociManifest, OCI_INDEX, OCI_MANIFEST } from './oci/client.ts'
+export { latestRelease, repositoryName, scopeOf } from './release/latest.ts'
+export { lint as shellLint, lintText as shellLintText } from './lint/shell.ts'
+export { declaration as packDeclaration, installedSize, pack, renderControl, type PackRequest } from './deb/pack.ts'
+export { INPUTS_FILE, inputsHash, manifest as inputsManifest, producerOf, producers, readDeclaration, type Declaration } from './pool/inputs.ts'
+export { fileKind, ITEM_LAYER, itemOf, poolItems, type Item } from './pool/items.ts'
+export { gate as poolGate } from './pool/gate.ts'
+export { guard as poolGuard, vercmp } from './pool/guard.ts'
+export { bearer } from './oci/client.ts'
+export { digestOf, EMPTY_CONFIG, EMPTY_CONFIG_DIGEST, Pusher } from './oci/push.ts'
+export { DEB_LAYER, POOL_ARTIFACT, poolArchives, poolManifest, publishPools, type PoolLayer } from './release/pool.ts'
+export { attach as releaseAttach, rowComparison } from './release/attach.ts'
+export { releaseCheck, releaseTag, stampTime, tagCommit } from './release/check.ts'

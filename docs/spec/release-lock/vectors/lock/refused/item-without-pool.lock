@@ -1,0 +1,4 @@
+# mica-lock v1
+release	mica-podman	20260929-1900	0123456789abcdef0123456789abcdef01234567
+pool	amd64	ghcr.io/micaoss/mica-podman:pool.amd64.20260929-1900@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+item	sbom	mica-podman	arm64	6.1.2-1	4444444444444444444444444444444444444444444444444444444444444444

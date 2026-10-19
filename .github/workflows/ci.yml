@@ -1,0 +1,27 @@
+name: ci
+# The gates: bun run check (lint, typecheck, test), with bun taken from a digest-pinned upstream image rather
+# than from mica-build-env, which consumes this repository (docs/design.md section 6). git and tar are the
+# runner's; the vectors are files of this repository (docs/spec/release-lock/vectors/).
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: bun from oven/bun:1.4.2, by digest
+        run: |
+          set -euo pipefail
+          image=docker.io/oven/bun:1.4.2@sha256:9114c058aeae42162ee16dd5084b95fe9473970bb6bcb5b232ab1630f0546895
+          docker pull -q "${image}" >/dev/null
+          id="$(docker create "${image}")"
+          mkdir -p "${RUNNER_TEMP}/bun"
+          docker cp "${id}:/usr/local/bin/bun" "${RUNNER_TEMP}/bun/bun"
+          docker rm "${id}" >/dev/null
+          echo "${RUNNER_TEMP}/bun" >>"${GITHUB_PATH}"
+      - run: bun --version
+      - run: bun install --frozen-lockfile
+      - run: bun run check

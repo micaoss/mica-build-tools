@@ -1,0 +1,18 @@
+# mica-lock v1
+# a Base release of three architectures
+release	mica-system-base	20261017-1200	0123456789abcdef0123456789abcdef01234567
+image	mica-system-base	rootfs	amd64	ghcr.io/micaoss/mica-system-base@sha256:1111111111111111111111111111111111111111111111111111111111111111
+image	mica-system-base	rootfs	arm64	ghcr.io/micaoss/mica-system-base@sha256:2222222222222222222222222222222222222222222222222222222222222222
+image	mica-system-base	rootfs	armhf	ghcr.io/micaoss/mica-system-base@sha256:3333333333333333333333333333333333333333333333333333333333333333
+image	mica-system-base	rootfs	index	ghcr.io/micaoss/mica-system-base:rootfs.20261017-1200@sha256:4444444444444444444444444444444444444444444444444444444444444444
+pool	amd64	ghcr.io/micaoss/mica-system-base:pool.amd64.20261017-1200@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+pool	arm64	ghcr.io/micaoss/mica-system-base:pool.arm64.20261017-1200@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+pool	armhf	ghcr.io/micaoss/mica-system-base:pool.armhf.20261017-1200@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+package	mica-busybox	amd64	1.37.0-1	5555555555555555555555555555555555555555555555555555555555555555
+package	mica-busybox	arm64	1.37.0-1	6666666666666666666666666666666666666666666666666666666666666666
+package	mica-busybox	armhf	1.37.0-1	7777777777777777777777777777777777777777777777777777777777777777
+item	sbom	mica-busybox	armhf	1.37.0-1	8888888888888888888888888888888888888888888888888888888888888888
+upstream	libasound2-data	amd64	1.2.14-1	9999999999999999999999999999999999999999999999999999999999999999	https://snapshot.debian.org/archive/debian/20260905T000000Z/pool/main/a/alsa-lib/libasound2-data_1.2.14-1_all.deb	alsa-utils
+upstream	libasound2-data	arm64	1.2.14-1	9999999999999999999999999999999999999999999999999999999999999999	https://snapshot.debian.org/archive/debian/20260905T000000Z/pool/main/a/alsa-lib/libasound2-data_1.2.14-1_all.deb	alsa-utils
+upstream	libasound2-data	armhf	1.2.14-1	9999999999999999999999999999999999999999999999999999999999999999	https://snapshot.debian.org/archive/debian/20260905T000000Z/pool/main/a/alsa-lib/libasound2-data_1.2.14-1_all.deb	alsa-utils
+apt	https://snapshot.debian.org/archive/debian/20260905T000000Z	trixie	main	/usr/share/keyrings/debian-archive-keyring.gpg

@@ -1,0 +1,22 @@
+{
+  "name": "mica-build-tools",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The one implementation of the Mica release lock, the consumer's locks/, the source cache and the build rules of mica-build-env RULES.md.",
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "check": "bun run lint && bun run typecheck && bun run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@types/bun": "1.4.2",
+    "eslint": "10.11.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.70.1"
+  }
+}
