@@ -195,6 +195,38 @@ describe('locks update', () => {
     }
   })
 
+  test('a snapshot row moves to the greatest snapshot of its family; a rewritten snapshot is refused', async () => {
+    // A mirror with dated branches, reached as https://example.org/mica-linux.git through url.insteadOf.
+    const mirror = join(scratch, 'mica-linux')
+    mkdirSync(mirror, { recursive: true })
+    git(mirror, ['init', '--quiet'])
+    const cut = (branch: string) => {
+      writeFileSync(join(mirror, 'file'), branch)
+      git(mirror, ['add', '.'])
+      git(mirror, ['commit', '--quiet', '-m', branch])
+      git(mirror, ['branch', '--force', branch])
+      return git(mirror, ['rev-parse', 'HEAD'])
+    }
+    const first = cut('mica/general-20261017'), second = cut('mica/general-20261024')
+    cut('mica/general-foo-20261031')
+    const url = 'https://example.org/mica-linux.git'
+    const env = { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: `url.${mirror}.insteadOf`, GIT_CONFIG_VALUE_0: url }
+    const upstream = join(root, 'locks/upstream.lock')
+    const tag = `git\tu-boot\thttps://source.denx.de/u-boot/u-boot.git\tv2025.01\t${'8'.repeat(40)}\n`
+    writeFileSync(upstream, `# mica-lock v1\ngit\tlinux\t${url}\tmica/general-20261017\t${first}\n${tag}`)
+
+    const check = await run(['locks', 'update', '--check'], env)
+    expect([check.code, check.out.split('\n')[2]]).toEqual([1, 'linux mica/general-20261017 -> mica/general-20261024'])
+    expect(readFileSync(upstream, 'utf8')).toContain(`mica/general-20261017\t${first}\n`)
+    expect((await run(['locks', 'update'], env)).code).toBe(0)
+    expect(readFileSync(upstream, 'utf8')).toBe(`# mica-lock v1\ngit\tlinux\t${url}\tmica/general-20261024\t${second}\n${tag}`)
+    expect(Bun.spawnSync(['git', '--git-dir', join(root, 'repos/git/mica-linux.git'), 'cat-file', '-t', second], { stdout: 'pipe' }).stdout.toString().trim()).toBe('commit')
+    expect((await run(['locks', 'update'], env)).out.split('\n')).toContain('linux mica/general-20261024 unchanged')
+
+    git(mirror, ['branch', '--force', 'mica/general-20261024', first])
+    expect(await run(['locks', 'update', '--check'], env)).toMatchObject({ code: 1, out: 'refused snapshot-moved' })
+  })
+
   test('an offline pin is left as it is, and a repository without the tools pin has none written', async () => {
     const offline = mkdtempSync(join(scratch, 'offline-'))
     cpSync(join(V, 'pins/valid/offline-checkout'), join(offline, 'locks'), { recursive: true })

@@ -1,6 +1,7 @@
 // `locks update` (design 3.1): every input pinned in locks/ moves to its latest release, and
 // locks/mica-build-tools.pin to the commit of this tool's latest release with bin/mica-tools rewritten from that
-// commit's bootstrap; an input given a release takes that one. Everything is downloaded and verified before
+// commit's bootstrap; an input given a release takes that one. A snapshot row of locks/upstream.lock moves to the
+// greatest snapshot of its family (release-lock.md 4.1.1). Everything is downloaded and verified before
 // anything is written, and what it writes is pins: a build still reads only what a pin names. With `check`
 // nothing under locks/ or bin/ is written: the lines say what would move, and the caller fails when any would.
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -12,6 +13,8 @@ import { ensure, mirrorOf } from '../repos/cache.ts'
 import { readPin, readToolsPin, TOOLS_PIN, TOOLS_PIN_HEADER } from './pins.ts'
 import { resolveMove, writeMove, type Move } from './releases.ts'
 import { COMMIT, RELEASE } from './rules.ts'
+import { listSnapshots, snapshotFamily, snapshotMove, withSnapshots } from './snapshot.ts'
+import { checkUpstream } from './upstream.ts'
 
 const TOOLS = 'mica-build-tools'
 
@@ -32,7 +35,7 @@ async function resolveTools(root: string, named: string | undefined, env: NodeJS
   return { commit, release, bootstrap: new Uint8Array(shown.stdout) }
 }
 
-/** What `locks update` found: one line per input, in the order of their names, this tool last, and how many move. */
+/** What `locks update` found: one line per input, in the order of their names, then the snapshot rows, this tool last, and how many move. */
 export type Update = { lines: string[], inputs: number, moved: number }
 
 /** `locks update`, and with `check` what it would do, writing nothing under locks/ or bin/. */
@@ -61,6 +64,17 @@ export async function updateLocks(root: string, named: Map<string, string>, chec
     moves.push(move)
     lines.push(`${input} ${pin.RELEASE} -> ${move.release}`)
   }
+  const upstream = join(locks, 'upstream.lock')
+  const snapshots = new Map<string, { ref: string, commit: string }>()
+  for (const row of existsSync(upstream) ? checkUpstream(upstream) : []) {
+    const family = row[0] === 'git' ? snapshotFamily(row[3]!) : undefined
+    if (family === undefined) continue
+    const move = snapshotMove(row, listSnapshots(row[2]!, family))
+    if (move === undefined) { lines.push(`${row[1]} ${row[3]} unchanged`); continue }
+    if (ensure(join(root, 'repos'), row[2]!, move.commit) !== 'commit') throw new ToolError(`${move.commit} of ${row[2]} is no commit`)
+    snapshots.set(row[1]!, move)
+    lines.push(`${row[1]} ${row[3]} -> ${move.ref}`)
+  }
   let toolsMove: ToolsMove | undefined
   if (tools) {
     const pinned = readToolsPin(join(locks, TOOLS_PIN))
@@ -76,9 +90,10 @@ export async function updateLocks(root: string, named: Map<string, string>, chec
     }
   }
 
-  const update = { lines, inputs: lines.length, moved: moves.length + (toolsMove === undefined ? 0 : 1) }
+  const update = { lines, inputs: lines.length, moved: moves.length + snapshots.size + (toolsMove === undefined ? 0 : 1) }
   if (check) return update
   for (const move of moves) writeMove(locks, move)
+  if (snapshots.size > 0) writeFileSync(upstream, withSnapshots(readFileSync(upstream, 'utf8'), snapshots))
   if (toolsMove !== undefined) {
     mkdirSync(join(root, 'bin'), { recursive: true })
     writeFileSync(join(root, 'bin/mica-tools'), toolsMove.bootstrap)

@@ -1,0 +1,3 @@
+# mica-lock v1
+# a same-day hand cut sorts after the plain snapshot of that day
+git	u-boot	https://github.com/micaoss/mica-uboot.git	mica/cx3576-20261024-1530	2222222222222222222222222222222222222222

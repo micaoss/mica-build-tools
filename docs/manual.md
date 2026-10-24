@@ -249,15 +249,22 @@ latest release, with `bin/mica-tools` rewritten from that commit's bootstrap.
   failure leaves every file as it was.
 - An offline pin is left as it is. A repository without
   `locks/mica-build-tools.pin` gets none written.
-- The third-party rows of `locks/upstream.lock` do not move: each upstream
-  names its versions in its own way.
+- A snapshot row of `locks/upstream.lock` (a `git` row whose ref is
+  `mica/<family>-<YYYYMMDD>[-<HHMM>]`, lock 4.1.1) moves to the greatest
+  snapshot branch of its family on its URL, and its commit is fetched into
+  `repos/`; one whose own branch has another head is `refused snapshot-moved`.
+  Every other third-party row stays: each upstream names its versions in its
+  own way.
 
-One line per input in the order of their names, this tool last:
+One line per input in the order of their names, then one per snapshot row,
+this tool last:
 
 ```text
 <input> <from> -> <to>
 <input> <release> unchanged
 <input> offline, left as it is
+<git row name> <from ref> -> <to ref>
+<git row name> <ref> unchanged
 mica-build-tools <from commit> -> <to commit> (<release>)
 ```
 

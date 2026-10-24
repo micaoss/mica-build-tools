@@ -135,7 +135,7 @@ other repositories hold it to.
 | `lock check`, `lock rows` | the file rules of lock §1 over one release lock, and its collect mode (lock §9.4) |
 | `upstream check`, `upstream rows`, `upstream get` | lock §4.1 over `locks/upstream.lock` |
 | `locks check`, `locks verify` | lock §4 over `locks/`, and every pinned lock as its release's asset (RULES §1) |
-| `locks move`, `locks update`, `local-lock` | writing a lock and its pin together, from a release or from a checkout's `_out/offline/` (lock §7) |
+| `locks move`, `locks update`, `local-lock` | writing a lock and its pin together, from a release or from a checkout's `_out/offline/` (lock §7); `locks update` also moves the snapshot rows of `locks/upstream.lock` (lock §4.1.1) |
 | `from` | images by digest out of `locks/`, and Dockerfiles that name none directly (RULES §2) |
 | `pin check`, `self-check` | the commit pins (2.1, lock §9.2) and the bootstrap copy (2.2) |
 

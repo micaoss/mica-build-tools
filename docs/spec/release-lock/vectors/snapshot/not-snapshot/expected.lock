@@ -1,0 +1,5 @@
+# mica-lock v1
+# refs that are no snapshot stay as they are
+git	linux	https://github.com/micaoss/mica-linux.git	master	1111111111111111111111111111111111111111
+git	u-boot	https://github.com/micaoss/mica-uboot.git	mica/general-2026102	2222222222222222222222222222222222222222
+git	uboot-vendor	https://github.com/micaoss/mica-uboot.git	mica/General-20261024	3333333333333333333333333333333333333333

@@ -1,0 +1,4 @@
+# mica-lock v1
+# a snapshot row moves to the greatest snapshot of its family; other families, malformed names and a tag row do not count
+git	linux	https://github.com/micaoss/mica-linux.git	mica/general-20261017	1111111111111111111111111111111111111111
+git	u-boot	https://source.denx.de/u-boot/u-boot.git	v2025.01	2222222222222222222222222222222222222222

@@ -96,3 +96,8 @@ repos/fetch-miss	refused	fetch-required	local
 lock/refused/apt-duplicate.lock	refused	duplicate-key	-
 lock/refused/apt-snapshot.lock	refused	apt-snapshot	-
 lock/refused/apt-suite.lock	refused	apt-suite	-
+snapshot/newer	valid	-	-
+snapshot/same-day	valid	-	-
+snapshot/unchanged	valid	-	-
+snapshot/not-snapshot	valid	-	-
+snapshot/moved	refused	snapshot-moved	-

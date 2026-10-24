@@ -8,6 +8,7 @@ import { Refused } from '../src/errors.ts'
 import { collect } from '../src/locks/collect.ts'
 import { checkLock } from '../src/locks/lock.ts'
 import { checkLocks, readToolsPin, type Mode } from '../src/locks/pins.ts'
+import { snapshotMove, withSnapshots } from '../src/locks/snapshot.ts'
 import { checkUpstream } from '../src/locks/upstream.ts'
 import { lookup } from '../src/repos/cache.ts'
 import { table, vectorsDir } from './vectors.ts'
@@ -22,6 +23,14 @@ function outcome(family: string, path: string, mode: string): string {
     else if (family === 'upstream') { checkUpstream(path) }
     else if (family === 'tools-pin') { readToolsPin(path) }
     else if (family === 'pins') { checkLocks(path, mode as Mode) }
+    else if (family === 'snapshot') {
+      const lock = join(path, 'upstream.lock'), listing = readFileSync(join(path, 'ls-remote'), 'utf8')
+      const moves = new Map(checkUpstream(lock).filter(r => r[0] === 'git').flatMap((r) => {
+        const move = snapshotMove(r, listing)
+        return move === undefined ? [] : [[r[1]!, move] as const]
+      }))
+      expect(withSnapshots(readFileSync(lock, 'utf8'), moves)).toBe(readFileSync(join(path, 'expected.lock'), 'utf8'))
+    }
     else if (family === 'repos') {
       const [[sha256]] = table(readFileSync(join(path, 'request'), 'utf8')) as [[string, string]]
       lookup(join(path, 'repos'), sha256, mode === 'offline')
@@ -37,7 +46,7 @@ function outcome(family: string, path: string, mode: string): string {
 
 describe('expected.tsv', () => {
   test('lists every family', () => {
-    expect(new Set(expected.map(([path]) => path!.split('/')[0]))).toEqual(new Set(['lock', 'upstream', 'tools-pin', 'pins', 'repos']))
+    expect(new Set(expected.map(([path]) => path!.split('/')[0]))).toEqual(new Set(['lock', 'upstream', 'tools-pin', 'pins', 'repos', 'snapshot']))
   })
   test.each(expected)('%s is %s %s (%s)', (path, result, rule, mode) => {
     const want = result === 'refused' ? `refused ${rule}` : 'valid'
@@ -80,7 +89,7 @@ describe('the vectors themselves', () => {
     const onDisk = [
       ...files('lock').filter(f => f.endsWith('.lock')), ...files('upstream').filter(f => f.endsWith('.lock')),
       ...files('tools-pin').filter(f => f.endsWith('.pin')),
-      ...directories('pins').flatMap(directories), ...directories('repos'),
+      ...directories('pins').flatMap(directories), ...directories('repos'), ...directories('snapshot'),
     ]
     expect(onDisk.length).toBeGreaterThan(50)
     expect(onDisk.filter(v => !listed.has(v))).toEqual([])

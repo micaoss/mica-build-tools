@@ -1,0 +1,3 @@
+# mica-lock v1
+# the row's own snapshot branch has another head: the snapshot was rewritten
+git	linux	https://github.com/micaoss/mica-linux.git	mica/general-20261024	1111111111111111111111111111111111111111

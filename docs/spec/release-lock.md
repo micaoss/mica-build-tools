@@ -599,7 +599,7 @@ with three kinds only:
 |---|---|---|---|
 | `image` | `image upstream <name> <platform> <reference>` | source, name, platform | a third-party image, the row of 1.2.1; the source is always `upstream` |
 | `source` | `source <name> <arch> <version> <sha256> <url>` | name, arch | a downloaded archive (a toolchain, an upstream source tarball, a vendor blob); `<arch>` is `amd64`, `arm64`, `armhf` or `all`; `<url>` is https |
-| `git` | `git <name> <url> <ref> <commit>` | name | a git tree pinned by commit (a kernel, U-Boot, an upstream tag); `<ref>` is the tag or branch name, informational; `<commit>` is 40 lowercase hex |
+| `git` | `git <name> <url> <ref> <commit>` | name | a git tree pinned by commit (a kernel, U-Boot, an upstream tag); `<ref>` is the tag or branch name, informational except on a snapshot row (4.1.1); `<commit>` is 40 lowercase hex |
 
 Only `mica-build-env` keeps `image` rows here: they are the list of approved
 third-party images its lock carries unchanged (1.2.1); every other repository
@@ -618,6 +618,35 @@ git` take their arguments from these rows.
 | `image-source` | an `image` row whose source is not `upstream` (a repository name included) |
 | `reference-digest` | an image reference without `@sha256:<digest>` |
 | `reference-upstream` | an image reference in `ghcr.io/micaoss/` or `local/` |
+
+#### 4.1.1 Snapshot rows
+
+A `git` row is a **snapshot row** when its `<ref>` matches
+`^mica/(<family>)-([0-9]{8})(-[0-9]{4})?$`, `<family>` being
+`[a-z0-9]+(-[a-z0-9]+)*`: a dated branch of a Mica mirror, cut from its
+upstream (`mica/general-20261024`, `mica/cx3576-20261024`). The `-<HHMM>`
+suffix is an urgent cut by hand on a day that already has a snapshot
+(`mica/cx3576-20261024-1530`). Snapshots of one family are ordered as strings,
+so a same-day cut sorts after the plain snapshot of that day. Every other
+`git` row (an upstream tag, `master`) is not a snapshot row.
+
+`mica-tools locks update` (and `--check`) moves each snapshot row:
+
+1. `git ls-remote <url> 'refs/heads/mica/<family>-*'`, keeping only the branch
+   names of the snapshot form whose family is exactly the row's
+   (`mica/cx3576-20261024` is not of the family `general`, nor
+   `mica/cx3576-foo-20261024` of `cx3576`);
+2. refused `snapshot-moved` when the row's own branch exists with a head other
+   than the row's `<commit>`: a snapshot is never rewritten;
+3. the greatest name taken; when it is greater than the row's `<ref>`, the row
+   gets that name and its head as `<ref>` and `<commit>`, and the commit is
+   fetched into `repos/` (section 5); otherwise the row stays.
+
+Rows that are not snapshot rows are never moved by the tools.
+
+| Rule | Refused when |
+|---|---|
+| `snapshot-moved` | the branch a snapshot row names has a head other than the row's commit |
 
 ### 4.2 The build tools: `locks/mica-build-tools.pin`
 
@@ -797,6 +826,13 @@ every family and every row; no other repository carries a copy (9.1).
   (`field-value`), `unsorted.lock` (`sort-order`). The valid pins case
   `pins/valid/release` also holds a `locks/upstream.lock` without a pin.
 - `tools-pin/valid/` and `tools-pin/refused/`: the commit pin of 9.2.
+- `snapshot/`: the update of snapshot rows (4.1.1): each directory holds an
+  `upstream.lock`, the `ls-remote` listing of its mirror, and for a valid
+  case the `expected.lock` the update leaves; `newer` (the greatest of the
+  family, ignoring other families, a longer family and a malformed name, and
+  leaving a tag row), `same-day` (the `-<HHMM>` cut after the plain one),
+  `unchanged`, `not-snapshot` (`master`, a 7-digit date and an uppercase
+  family stay) are valid; `moved` is refused (`snapshot-moved`).
 - `repos/`: the offline side of `repos get`: each directory holds a
   `repos/sha256/` cache and a `request` (sha256, url); `cache-hit` is valid,
   `cache-corrupt` and `offline-miss` are refused, all under `MICA_OFFLINE=1`,
