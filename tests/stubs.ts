@@ -117,7 +117,10 @@ export class Stub {
     if (one && request.method === 'PATCH') {
       const release = this.releases.get(one[1]!)?.find(r => r.id === Number(one[2]))
       if (!release) return new Response('', { status: 404 })
-      release.body = (await request.json() as { body: string }).body
+      const { body } = await request.json() as { body: string }
+      // GitHub's limit on a release body.
+      if (body.length > 125000) return Response.json({ message: 'Validation Failed' }, { status: 422 })
+      release.body = body
       return Response.json(this.shape(release))
     }
     const assets = /^\/repos\/micaoss\/([^/]+)\/releases\/(\d+)\/assets$/.exec(path)

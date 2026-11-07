@@ -26,6 +26,8 @@ const LABELS: Record<string, string> = {
   input: 'Inputs', product: 'Products', bundle: 'Bundles', asset: 'Assets', data: 'Data',
 }
 const KINDS: [string, string][] = Object.keys(KIND_COLUMNS).filter(k => k !== 'release').map(k => [k, LABELS[k]!])
+/** The longest release body written; GitHub refuses one over 125000 characters. */
+const BODY_LIMIT = 120000
 
 /** A row as compared: a reference by its digest alone, since its tag names the release (lock 1.3). */
 function comparable(row: string): string {
@@ -34,9 +36,10 @@ function comparable(row: string): string {
 
 /**
  * The notes paragraph comparing a lock's rows with the previous release's: one line per kind either lock carries,
- * `unchanged` or `changed`, then the rows that differ.
+ * `unchanged` or `changed`, then the rows that differ. When those rows would make the paragraph longer than `limit`,
+ * a changed kind's line counts its rows instead, and the rows are left to the two locks.
  */
-export function rowComparison(previous: string | undefined, before: string, after: string, lockName = 'the lock'): string {
+export function rowComparison(previous: string | undefined, before: string, after: string, lockName = 'the lock', limit = BODY_LIMIT): string {
   const rows = (text: string) => text.split('\n').filter(l => l !== '' && !l.startsWith('#') && !l.startsWith('release\t'))
   const old = rows(before), now = rows(after)
   const present = KINDS.filter(([kind]) => [...old, ...now].some(r => r.startsWith(`${kind}\t`)))
@@ -49,7 +52,13 @@ export function rowComparison(previous: string | undefined, before: string, afte
   })
   if (removed.length === 0 && added.length === 0) return lines.join('\n')
   const diff = [...removed.map(r => `- ${r.replaceAll('\t', ' ')}`), ...added.map(r => `+ ${r.replaceAll('\t', ' ')}`)]
-  return `${lines.join('\n')}\n\n\`\`\`diff\n${diff.join('\n')}\n\`\`\``
+  const full = `${lines.join('\n')}\n\n\`\`\`diff\n${diff.join('\n')}\n\`\`\``
+  if (full.length <= limit) return full
+  const count = (list: string[], kind: string) => list.filter(r => r.startsWith(`${kind}\t`)).length
+  return [...present.map(([kind, label], i) => {
+    const gone = count(removed, kind), come = count(added, kind)
+    return gone + come === 0 ? lines[i]! : `${label}: changed from ${previous} (${gone} removed, ${come} added).`
+  }), `The rows that differ are too many for the notes; compare the rows of ${lockName} in ${previous} and in this release.`].join('\n')
 }
 
 function api(): string {
@@ -166,8 +175,11 @@ export async function attach(root: string, repository: string, tag: string, lock
   if (!(release.body ?? '').includes(MARKER)) {
     const previous = await latestRelease(repository, { before: tag, asset: name, scope: '' })
     const before = previous === undefined ? '' : new TextDecoder().decode(await download(`${assetBase(repository, previous)}${name}`))
-    const paragraph = [MARKER, ...(notes ? [notes] : []), rowComparison(previous, before, new TextDecoder().decode(lockBytes), name)].join('\n')
-    const body = release.body ? `${release.body.replace(/\s+$/, '')}\n\n${paragraph}\n` : `${paragraph}\n`
+    const head = release.body ? `${release.body.replace(/\s+$/, '')}\n\n` : ''
+    const lead = [MARKER, ...(notes ? [notes] : [])].join('\n')
+    const room = BODY_LIMIT - head.length - lead.length - 2
+    const paragraph = `${lead}\n${rowComparison(previous, before, new TextDecoder().decode(lockBytes), name, room)}`
+    const body = `${head}${paragraph}\n`
     const patched = await call('PATCH', `${repo}/releases/${release.id}`, JSON.stringify({ body }))
     if (patched.status !== 200) throw new ToolError(`updating the notes of ${tag} answered ${failure(patched, await patched.text())}`)
     lines.push(...paragraph.split('\n').slice(1).filter(l => /^[A-Z][A-Za-z ]+: /.test(l)))

@@ -398,3 +398,19 @@ describe('pool items (lock 1.2.7)', () => {
     expect(await run(['lock', 'check', await lock(`core\tmica-report\tamd64\t2.0.0\t${'b'.repeat(64)}`)])).toMatchObject({ code: 1, out: 'refused kind-unknown' })
   })
 })
+
+describe('release notes of a large lock change', () => {
+  test('the rows that differ are counted instead of listed when they would pass GitHub\'s limit', async () => {
+    const rows = (tag: string, version: string) => [`pool\tamd64\tghcr.io/micaoss/mica-core:pool.amd64.${tag}@sha256:${'a'.repeat(64)}`,
+      ...Array.from({ length: 2000 }, (_, i) => `package\tmica-p${String(i).padStart(4, '0')}\tamd64\t${version}\t${'b'.repeat(64)}`)].join('\n')
+    for (const [tag, version] of [['20260929-1000', '1.0-1'], ['20260929-1100', '1.0-2']] as const) {
+      cut(tag)
+      stub.release('mica-core', tag)
+      expect((await run(['release', 'attach', tag, await lockOf(tag, rows(tag, version))])).code).toBe(0)
+    }
+    const body = stub.releases.get('mica-core')!.find(r => r.tag_name === '20260929-1100')!.body!
+    expect(body.length).toBeLessThanOrEqual(125000)
+    expect(body).toContain('Packages: changed from 20260929-1000 (2000 removed, 2000 added).\n')
+    expect(body).not.toContain('```diff')
+  })
+})

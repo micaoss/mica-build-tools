@@ -41,6 +41,9 @@ builds, what each holds and how they are pinned and rebuilt.
 - Once the assets are attached, the release notes gain the comparison of the
   lock's rows with those of the previous release carrying a lock, kind by
   kind: "<Kind>: unchanged" or "<Kind>: changed", then the rows that differ.
+  Where those rows would take the notes past 120000 characters (GitHub
+  refuses a release body over 125000), each changed kind counts its removed
+  and added rows instead, and the rows are left to the two locks.
 - A consumer records the tag and the sha256 of `SHA256SUMS`. It downloads
   from `https://github.com/micaoss/<repository>/releases/download/<tag>/` and
   refuses the assets unless `SHA256SUMS` hashes to the recorded value and

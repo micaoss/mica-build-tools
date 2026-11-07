@@ -553,7 +553,10 @@ The release notes gain the caller's `--notes` text and, for each kind either
 lock carries, one line against the previous release that carries the lock --
 `<Kind>: unchanged from <previous>.` or `<Kind>: changed from <previous>.` --
 then the rows that differ as a diff. A reference is compared by its digest
-alone, since its tag names the release.
+alone, since its tag names the release. Where the diff would take the whole
+body past 120000 characters (GitHub refuses one over 125000), a changed kind's
+line becomes `<Kind>: changed from <previous> (<n> removed, <m> added).`, the
+diff is left out, and a last line says to compare the two locks' rows.
 
 ```bash
 gh release create "${tag}" --target "$(git rev-parse HEAD)" --title "${tag}" --notes ''

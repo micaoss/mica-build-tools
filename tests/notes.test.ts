@@ -28,6 +28,25 @@ describe('rowComparison', () => {
       .toEqual(['Images: unchanged from 20260916-0735.', 'Data: changed from 20260916-0735.'])
   })
 
+  test('a comparison too long for the notes keeps the kind lines with counts, and drops the rows', () => {
+    const packages = (version: string) => Array.from({ length: 2000 }, (_, i) => `package\tmica-p${i}\tamd64\t${version}\t${'d'.repeat(64)}\n`).join('')
+    const notes = rowComparison('20261031-0315', lock('20261031-0315', D1, packages('1.0-1')), lock('20261101-1022', D1, packages('1.0-2')), 'mica-system-base.lock')
+    expect(notes.length).toBeLessThanOrEqual(120000)
+    expect(notes).not.toContain('```diff')
+    expect(notes.split('\n')).toEqual([
+      'Images: unchanged from 20261031-0315.',
+      'Packages: changed from 20261031-0315 (2000 removed, 2000 added).',
+      'The rows that differ are too many for the notes; compare the rows of mica-system-base.lock in 20261031-0315 and in this release.',
+    ])
+  })
+
+  test('the limit is what the rest of the notes leaves', () => {
+    const before = lock('20260916-0735', D1), after = lock('20260926-1900', D2)
+    const full = rowComparison('20260916-0735', before, after)
+    expect(rowComparison('20260916-0735', before, after, 'the lock', full.length)).toBe(full)
+    expect(rowComparison('20260916-0735', before, after, 'the lock', full.length - 1)).not.toContain('```diff')
+  })
+
   test('with no previous release', () => {
     expect(rowComparison(undefined, '', lock('20260926-1900', D1), 'mica-build-env.lock')).toBe('Images: the first release carrying mica-build-env.lock.')
   })
