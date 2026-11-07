@@ -23,7 +23,7 @@ const STAMP = /(?:^|\.)([0-9]{8}-[0-9]{4})$/
 const MARKER = '<!-- mica-tools release attach -->'
 const LABELS: Record<string, string> = {
   image: 'Images', pool: 'Pools', package: 'Packages', item: 'Pool items', board: 'Boards', upstream: 'Upstream packages', apt: 'Debian sources',
-  input: 'Inputs', product: 'Products', bundle: 'Bundles', asset: 'Assets', data: 'Data',
+  input: 'Inputs', product: 'Products', rootfs: 'Root file systems', bundle: 'Bundles', asset: 'Assets', data: 'Data',
 }
 const KINDS: [string, string][] = Object.keys(KIND_COLUMNS).filter(k => k !== 'release').map(k => [k, LABELS[k]!])
 /** The longest release body written; GitHub refuses one over 125000 characters. */

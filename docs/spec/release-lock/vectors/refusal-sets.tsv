@@ -19,6 +19,11 @@ lock/refused/board-duplicate-component.lock	set	duplicate-key	unmeasured
 lock/refused/board-components.lock	set	board-components	unmeasured
 lock/refused/build-only-kind.lock	set	build-only-kind	unmeasured
 lock/refused/bundle-without-product.lock	set	bundle-without-product	unmeasured
+lock/refused/rootfs-without-product.lock	set	rootfs-without-product	valid
+lock/refused/rootfs-id.lock	set	rootfs-without-product	valid
+lock/refused/rootfs-build-only.lock	set	build-only-kind rootfs-without-product	valid
+lock/refused/rootfs-sort-order.lock	set	sort-order	valid
+lock/refused/rootfs-columns.lock	set	column-count	valid
 lock/refused/asset-without-bundle.lock	set	asset-without-bundle	unmeasured
 lock/refused/update-full.lock	set	update-full	unmeasured
 lock/refused/update-kind.lock	stopped	field-value	valid

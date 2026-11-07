@@ -13,11 +13,11 @@ export const LOCK_HEADER = '# mica-lock v1'
 /** The kinds of 1.2, in the order of 1.4, and their column counts. */
 export const KIND_COLUMNS: Record<string, number> = {
   release: 4, image: 5, pool: 3, package: 5, item: 6, board: 5, upstream: 7, apt: 5,
-  input: 4, product: 8, bundle: 4, asset: 6, data: 4,
+  input: 4, product: 8, rootfs: 4, bundle: 4, asset: 6, data: 4,
 }
 const KIND_ORDER = Object.keys(KIND_COLUMNS)
 const BASE_ONLY = new Set(['upstream', 'apt'])
-const BUILD_ONLY = new Set(['input', 'product', 'bundle', 'asset'])
+const BUILD_ONLY = new Set(['input', 'product', 'rootfs', 'bundle', 'asset'])
 /** 1.2.7: an archive's file suffix is no item's type. */
 const ARCHIVE_TYPE = 'deb'
 const PROFILE = new Set(['dev', 'prod'])
@@ -135,6 +135,11 @@ export function checkLock(path: string, check: Checker = new Checker()): Lock {
         && row.slice(5, 8).every(v => SHA256.test(v)), text)
       key = [row[1]!]
     }
+    else if (kind === 'rootfs') {
+      // 1.2.2: the inputs digest of a product's root component, beside the rootfs id of its product row.
+      check.field(SCOPE.test(row[1]!) && SHA256.test(row[2]!) && SHA256.test(row[3]!), text)
+      key = [row[1]!]
+    }
     else if (kind === 'bundle') {
       check.field(SCOPE.test(row[1]!) && BUNDLE.has(row[2]!), text)
       reference(row[3]!)
@@ -175,6 +180,8 @@ export function checkLock(path: string, check: Checker = new Checker()): Lock {
   const products = new Set(rows.filter(r => r[0] === 'product').map(r => r[1]!))
   const bundles = new Set(rows.filter(r => r[0] === 'bundle').map(r => `${r[1]}\t${r[2]}`))
   if (rows.some(r => (r[0] === 'bundle' || r[0] === 'asset') && !products.has(r[1]!))) check.refuse('bundle-without-product', path)
+  if (rows.some(r => r[0] === 'rootfs' && !rows.some(p => p[0] === 'product' && p[1] === r[1] && p[7] === r[2])))
+    check.refuse('rootfs-without-product', path)
   if (rows.some(r => r[0] === 'asset' && !bundles.has(`${r[1]}\t${r[2]}`))) check.refuse('asset-without-bundle', path)
   if (rows.some(r => r[0] === 'bundle' && r[2] === 'update'
     && !rows.some(a => a[0] === 'asset' && a[1] === r[1] && a[2] === 'update' && a[3] === 'full')))

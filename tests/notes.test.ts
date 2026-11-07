@@ -47,6 +47,11 @@ describe('rowComparison', () => {
     expect(rowComparison('20260916-0735', before, after, 'the lock', full.length - 1)).not.toContain('```diff')
   })
 
+  test('a rootfs row has its kind line', () => {
+    const withRootfs = lock('20260926-1900', D1, `rootfs\tuefi-x64-dev\t${D1}\t${D2}\n`)
+    expect(rowComparison('20260916-0735', lock('20260916-0735', D1), withRootfs).split('\n')[1]).toBe('Root file systems: changed from 20260916-0735.')
+  })
+
   test('with no previous release', () => {
     expect(rowComparison(undefined, '', lock('20260926-1900', D1), 'mica-build-env.lock')).toBe('Images: the first release carrying mica-build-env.lock.')
   })

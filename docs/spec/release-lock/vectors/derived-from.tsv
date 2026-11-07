@@ -12,6 +12,11 @@ lock/refused/board-components.lock	edit-of	lock/valid/mica-build.uefi-x64.lock
 lock/refused/board-duplicate-component.lock	edit-of	lock/valid/mica-build.uefi-x64.lock
 lock/refused/build-only-kind.lock	edit-of	lock/valid/mica-core.lock
 lock/refused/bundle-without-product.lock	edit-of	lock/valid/mica-build.uefi-x64.lock
+lock/refused/rootfs-without-product.lock	edit-of	lock/valid/mica-build-rootfs.lock
+lock/refused/rootfs-id.lock	edit-of	lock/valid/mica-build-rootfs.lock
+lock/refused/rootfs-build-only.lock	edit-of	lock/valid/mica-core.lock
+lock/refused/rootfs-sort-order.lock	reorder-of	lock/valid/mica-build-rootfs.lock
+lock/refused/rootfs-columns.lock	edit-of	lock/valid/mica-build-rootfs.lock
 lock/refused/column-count.lock	minimal-of	lock/valid/mica-core.lock
 lock/refused/data-columns.lock	edit-of	lock/valid/mica-system-base.lock
 lock/refused/data-duplicate.lock	edit-of	lock/valid/mica-system-base-data.lock

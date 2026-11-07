@@ -78,6 +78,7 @@ consumer keeps a scoped input.
 | `apt` | `apt <uri> <suite> <components> <signed-by>` | uri, suite | one Debian source, one row per source (1.2.5); `<components>` space-separated, `<signed-by>` an absolute keyring path; `mica-system-base` only |
 | `input` | `input <repository>[.<scope>] <release> <sha256>` | input | one release `mica-build` composed from (1.2.2); `mica-build` only |
 | `product` | `product <product> <board> <profile> <generation> <deployment id> <kernel id> <rootfs id>` | product | one product of the release and its signed deployment (1.2.2); `mica-build` only |
+| `rootfs` | `rootfs <product> <rootfs id> <inputs digest>` | product | the inputs digest of the product's root component (1.2.2); optional; `mica-build` only |
 | `bundle` | `bundle <product> image\|update <reference>` | product, type | the product's OCI image or update bundle (1.2.2); `mica-build` only |
 | `asset` | `asset <product> image\|update <kind> <file> <sha256>` | product, type, kind | one GitHub Release asset and its bundle layer (1.2.2); `mica-build` only |
 | `data` | `data <name> <file> <sha256>` | name | one producer-data release asset, published by any repository (1.2.4) |
@@ -146,6 +147,11 @@ A `mica-build` release lock is
   board (1.0), `<profile>` is `dev` or `prod`, `<generation>` a positive
   decimal, and the three identities are the 64-hex identities of the signed
   deployment, its kernel and its rootfs;
+- `rootfs <product> <rootfs id> <inputs digest>`: the rootfs inputs digest of
+  the product's root component, both values 64 lowercase hex. Two roots with
+  one inputs digest are the same root up to the release stamp. The row is
+  optional: a lock without it is valid. Where it is present, its product has
+  a `product` row whose `<rootfs id>` is the same (`rootfs-without-product`);
 - `bundle <product> image|update <reference>`: the OCI manifests
   `mica-build:image.<product>.<release>` (a layer per image kind, annotated
   `mica.image-kind`) and `mica-build:update.<product>.<release>` (a layer per
@@ -347,8 +353,8 @@ new `pool.<...>.<release>` tag is a new tag on the same digest.
 ### 1.4 Order
 
 Rows are sorted by kind in the table's order (`release`, `image`, `pool`,
-`package`, `item`, `board`, `upstream`, `apt`, `input`, `product`, `bundle`,
-`asset`, `data`), then by key, compared as bytes. The
+`package`, `item`, `board`, `upstream`, `apt`, `input`, `product`, `rootfs`,
+`bundle`, `asset`, `data`), then by key, compared as bytes. The
 same inputs therefore give the same bytes.
 
 ### 1.5 Refusal rules
@@ -360,7 +366,7 @@ the ones the vectors use:
 |---|---|
 | `header` | line 1 is not `# mica-lock v1` |
 | `encoding` | not UTF-8, CR, missing final LF, empty line, leading space, trailing tab |
-| `kind-unknown` | the first column is not one of the thirteen kinds |
+| `kind-unknown` | the first column is not one of the fourteen kinds |
 | `image-source` | an `image` row whose source is neither `upstream` nor a repository name, or a repository other than the release row's |
 | `column-count` | a row has the wrong number of columns for its kind |
 | `release-row` | no release row, more than one, or not the first row |
@@ -376,8 +382,9 @@ the ones the vectors use:
 | `apt-suite` | `apt` rows whose suites are not one release and its `<release>-<pocket>` pockets, or without the release itself (1.2.5) |
 | `package-without-pool` | a `package` row whose arch has no `pool` row |
 | `item-without-pool` | an `item` row whose arch has no `pool` row |
-| `build-only-kind` | an `input`, `product`, `bundle` or `asset` row in a lock of any repository but `mica-build` |
+| `build-only-kind` | an `input`, `product`, `rootfs`, `bundle` or `asset` row in a lock of any repository but `mica-build` |
 | `bundle-without-product` | a `bundle` or `asset` row whose product has no `product` row |
+| `rootfs-without-product` | a `rootfs` row whose product has no `product` row, or whose `<rootfs id>` differs from that row's |
 | `asset-without-bundle` | an `asset` row without a `bundle` row of its product and type |
 | `update-full` | an update `bundle` without the product's `full` update asset |
 | `data-file` | two `data` rows naming the same `<file>` |
@@ -785,7 +792,8 @@ every family and every row; no other repository carries a copy (9.1).
   `offline-mica-core.lock` (an offline lock with `local/`
   references), `mica-build.uefi-x64.lock` (a scoped `mica-build` lock: the board's
   `pool`, `package` and `board` rows, `input`, `product`, `bundle`, `asset`
-  rows, a `root` update beside `full`), `mica-build.uefi-x64.basic.lock` (a
+  rows, a `root` update beside `full`), `mica-build-rootfs.lock` (that lock
+  with a `rootfs` row per product), `mica-build.uefi-x64.basic.lock` (a
   product-scoped `mica-build` lock, `<board>.<variant>`).
 - `lock/refused/`: one lock per refusal rule of 1.5, each written against a
   valid lock and **declaring which one** in `derived-from.tsv` (9.3); the image refusals are `image-source.lock` (a repository source
@@ -802,7 +810,12 @@ every family and every row; no other repository carries a copy (9.1).
   (`duplicate-key`) and `board-components.lock` (`board-components`, no
   `kernel` row); the `mica-build` refusals are `build-only-kind.lock`,
   `bundle-without-product.lock`, `asset-without-bundle.lock`, `update-full.lock`
-  and `update-kind.lock` (`field-value`, a `firmware` update); the source refusals are `apt-duplicate.lock`
+  and `update-kind.lock` (`field-value`, a `firmware` update); the `rootfs`
+  refusals are `rootfs-without-product.lock` (a product without a `product`
+  row) and `rootfs-id.lock` (another rootfs id than the product row's), both
+  `rootfs-without-product`, `rootfs-build-only.lock` (`build-only-kind`, in a
+  `mica-core` lock), `rootfs-sort-order.lock` (`sort-order`, after `bundle`)
+  and `rootfs-columns.lock` (`column-count`); the source refusals are `apt-duplicate.lock`
   (`duplicate-key`, one source twice), `apt-snapshot.lock` (a pocket at another
   snapshot) and `apt-suite.lock` (pockets without their release);
   `pool-arch.lock` (`field-value`, a pool of an architecture outside the
