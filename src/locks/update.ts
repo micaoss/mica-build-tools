@@ -4,7 +4,7 @@
 // greatest snapshot of its family (release-lock.md 4.1.1). Everything is downloaded and verified before
 // anything is written, and what it writes is pins: a build still reads only what a pin names. With `check`
 // nothing under locks/ or bin/ is written: the lines say what would move, and the caller fails when any would.
-import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ToolError } from '../errors.ts'
 import { tagCommit } from '../release/check.ts'
@@ -35,8 +35,11 @@ async function resolveTools(root: string, named: string | undefined, env: NodeJS
   return { commit, release, bootstrap: new Uint8Array(shown.stdout) }
 }
 
-/** What `locks update` found: one line per input, in the order of their names, then the snapshot rows, this tool last, and how many move. */
-export type Update = { lines: string[], inputs: number, moved: number }
+/**
+ * What `locks update` found: one line per input, in the order of their names, then the snapshot rows, this tool
+ * last, and how many move; `names` are the moving ones in that order, a snapshot row as `git:<row name>`.
+ */
+export type Update = { lines: string[], inputs: number, moved: number, names: string[] }
 
 /** `locks update`, and with `check` what it would do, writing nothing under locks/ or bin/. */
 export async function updateLocks(root: string, named: Map<string, string>, check = false, env: NodeJS.ProcessEnv = process.env): Promise<Update> {
@@ -90,7 +93,8 @@ export async function updateLocks(root: string, named: Map<string, string>, chec
     }
   }
 
-  const update = { lines, inputs: lines.length, moved: moves.length + snapshots.size + (toolsMove === undefined ? 0 : 1) }
+  const names = [...moves.map(m => m.input), ...[...snapshots.keys()].map(n => `git:${n}`), ...toolsMove === undefined ? [] : [TOOLS]]
+  const update = { lines, inputs: lines.length, moved: names.length, names }
   if (check) return update
   for (const move of moves) writeMove(locks, move)
   if (snapshots.size > 0) writeFileSync(upstream, withSnapshots(readFileSync(upstream, 'utf8'), snapshots))
@@ -101,4 +105,18 @@ export async function updateLocks(root: string, named: Map<string, string>, chec
     writeFileSync(join(locks, TOOLS_PIN), `${TOOLS_PIN_HEADER}\nREPOSITORY=${TOOLS}\nCOMMIT=${toolsMove.commit}\n`)
   }
   return update
+}
+
+/**
+ * The tree's own hook (design 3.1): locks/after-update, when present, runs from the root with the moved items as its
+ * arguments once the pins are written. Nothing is rolled back when it fails, so it can be rerun by hand.
+ */
+export function afterUpdate(root: string, names: string[]): void {
+  const hook = join(root, 'locks/after-update')
+  if (names.length === 0 || !existsSync(hook)) return
+  if ((statSync(hook).mode & 0o111) === 0) throw new ToolError('locks/after-update is not executable')
+  const run = Bun.spawnSync([hook, ...names], { cwd: root, stdin: 'ignore', stdout: 'inherit', stderr: 'inherit' })
+  if (run.exitCode === 0) return
+  const how = run.signalCode ? `signal ${run.signalCode}` : `exit ${run.exitCode}`
+  throw new ToolError(`locks/after-update failed (${how}); the pins are written, rerun it by hand: locks/after-update ${names.join(' ')}`)
 }

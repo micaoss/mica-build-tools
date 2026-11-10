@@ -229,7 +229,8 @@ mica-core 20260928-1520: SHA256SUMS <sha256> lists locks/mica-core.lock, verifie
 Downloads that release's lock and `SHA256SUMS`, verifies them, and writes
 `locks/<input>.lock` and `locks/pins/<input>.pin` together; no other file
 changes. With no release, the latest release that carries the lock. It also
-adds an input the repository did not pin before.
+adds an input the repository did not pin before. Then `locks/after-update`
+runs, when present, with the input as its argument (see `locks update`).
 
 ```console
 $ bin/mica-tools locks move mica-core 20260928-1520
@@ -286,6 +287,24 @@ $ echo $?
 `--check` with `<input>=<release>` answers whether the pins are exactly what
 is named, so a repository that holds an input back can still gate on the
 rest.
+
+When anything moved, and `locks/after-update` exists, it runs once every file
+is written: the repository's own step after a move (refreshing a fixture taken
+from a pinned release, say). The tools know nothing of what it does.
+
+- It runs from the tree root, stdin closed, stdout and stderr passed through,
+  the environment inherited.
+- Its arguments are the moved items in the order printed: each input by its
+  pin name (`<repository>[.<scope>]`), then each snapshot row as
+  `git:<row name>`, then `mica-build-tools`. For example
+  `locks/after-update mica-core git:linux mica-build-tools`.
+- It never runs with `--check`, nor when nothing moved.
+- Not executable: `error: locks/after-update is not executable`, exit 1.
+- A non-zero exit: `error: locks/after-update failed (exit <n>); the pins are
+  written, rerun it by hand: locks/after-update <arguments>`, exit 1 (or
+  `(signal <name>)`). Nothing is rolled back.
+
+`locks check` ignores the file.
 
 #### `local-lock <repository>[.<scope>] <checkout>`
 

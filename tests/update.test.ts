@@ -80,6 +80,16 @@ afterAll(() => {
 })
 
 /** A consumer pinning both producers at 20260914-2042 and this tool at its first commit. */
+/** locks/after-update, recording each call as `<cwd>|<argv>` in hook.log beside locks/, then running `then`. */
+function hook(then = 'exit 0', mode = 0o755): string {
+  const log = join(root, 'hook.log')
+  writeFileSync(join(root, 'locks/after-update'), `#!/bin/sh\nprintf '%s|%s\\n' "$PWD" "$*" >> '${log}'\n${then}\n`)
+  chmodSync(join(root, 'locks/after-update'), mode)
+  return log
+}
+
+const calls = (log: string) => existsSync(log) ? readFileSync(log, 'utf8').split('\n').filter(Boolean) : []
+
 beforeEach(() => {
   root = mkdtempSync(join(scratch, 'consumer-'))
   cpSync(join(V, 'pins/valid/release'), join(root, 'locks'), { recursive: true })
@@ -107,6 +117,12 @@ describe('locks move', () => {
     expect(pin('mica-core')).toContain('RELEASE=20260921-1000\n')
     expect(readFileSync(join(root, 'locks/mica-core.lock'))).toEqual(Buffer.from(lockAt('mica-core', '20260921-1000')))
     expect((await run(['locks', 'move', 'mica-podman'])).err).toContain('mica-podman has no published release carrying mica-podman.lock')
+  })
+
+  test('locks/after-update runs with the input moved', async () => {
+    const log = hook()
+    expect((await run(['locks', 'move', 'mica-core'])).code).toBe(0)
+    expect(calls(log)).toEqual([`${root}|mica-core`])
   })
 })
 
@@ -195,6 +211,38 @@ describe('locks update', () => {
     }
   })
 
+  test('locks/after-update runs once from the root with what moved, after the pins are written', async () => {
+    const log = hook(`grep -q RELEASE=20260921-1000 locks/pins/mica-core.pin || exit 9`)
+    expect(await run(['locks', 'update', '--check'])).toMatchObject({ code: 1 })
+    expect(calls(log)).toEqual([])
+    expect((await run(['locks', 'update'])).code).toBe(0)
+    expect(calls(log)).toEqual([`${root}|mica-core mica-build-tools`])
+    // Nothing moves: not run.
+    expect((await run(['locks', 'update'])).code).toBe(0)
+    expect(calls(log)).toHaveLength(1)
+  })
+
+  test('a locks/after-update that is not executable is refused, the pins written', async () => {
+    const log = hook('exit 0', 0o644)
+    expect(await run(['locks', 'update'])).toMatchObject({ code: 1, err: 'error: locks/after-update is not executable' })
+    expect(calls(log)).toEqual([])
+    expect(pin('mica-core')).toContain('RELEASE=20260921-1000\n')
+  })
+
+  test('a failing locks/after-update fails the command; nothing is rolled back', async () => {
+    const log = hook('exit 3')
+    expect(await run(['locks', 'update'])).toMatchObject({
+      code: 1,
+      err: 'error: locks/after-update failed (exit 3); the pins are written, rerun it by hand: locks/after-update mica-core mica-build-tools',
+    })
+    expect(calls(log)).toHaveLength(1)
+    expect(pin('mica-core')).toContain('RELEASE=20260921-1000\n')
+    expect(toolsPin()).toContain(`COMMIT=${commits[1]}\n`)
+    const killed = hook('kill -TERM $$')
+    expect((await run(['locks', 'move', 'mica-core', '20260920-1000'])).err).toBe('error: locks/after-update failed (signal SIGTERM); the pins are written, rerun it by hand: locks/after-update mica-core')
+    expect(calls(killed)).toHaveLength(2)
+  })
+
   test('a snapshot row moves to the greatest snapshot of its family; a rewritten snapshot is refused', async () => {
     // A mirror with dated branches, reached as https://example.org/mica-linux.git through url.insteadOf.
     const mirror = join(scratch, 'mica-linux')
@@ -218,7 +266,9 @@ describe('locks update', () => {
     const check = await run(['locks', 'update', '--check'], env)
     expect([check.code, check.out.split('\n')[2]]).toEqual([1, 'linux mica/general-20261017 -> mica/general-20261024'])
     expect(readFileSync(upstream, 'utf8')).toContain(`mica/general-20261017\t${first}\n`)
+    const log = hook()
     expect((await run(['locks', 'update'], env)).code).toBe(0)
+    expect(calls(log)).toEqual([`${root}|mica-core git:linux mica-build-tools`])
     expect(readFileSync(upstream, 'utf8')).toBe(`# mica-lock v1\ngit\tlinux\t${url}\tmica/general-20261024\t${second}\n${tag}`)
     expect(Bun.spawnSync(['git', '--git-dir', join(root, 'repos/git/mica-linux.git'), 'cat-file', '-t', second], { stdout: 'pipe' }).stdout.toString().trim()).toBe('commit')
     expect((await run(['locks', 'update'], env)).out.split('\n')).toContain('linux mica/general-20261024 unchanged')

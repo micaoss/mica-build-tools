@@ -11,7 +11,7 @@ import { buildArgs, checkDockerfiles, resolve as resolveImage } from './locks/fr
 import { checkLock } from './locks/lock.ts'
 import { checkLocks, modeOf, readToolsPin, TOOLS_PIN } from './locks/pins.ts'
 import { localLock, moveLock, verifyLocks } from './locks/releases.ts'
-import { updateLocks } from './locks/update.ts'
+import { afterUpdate, updateLocks } from './locks/update.ts'
 import { checkUpstream, gitField, sourceField } from './locks/upstream.ts'
 import { check as reposCheck, checkoutPinned, get as reposGet } from './repos/cache.ts'
 import { controlFields, controlText, payloadMember } from './deb/archive.ts'
@@ -122,6 +122,7 @@ const COMMANDS: Record<string, Command> = {
     async run(args, io) {
       arity(args, 1, 2)
       io.out(await moveLock(locksDir(), args[0]!, args[1]))
+      afterUpdate(root(), [args[0]!])
     },
   },
   'locks update': {
@@ -135,8 +136,9 @@ const COMMANDS: Record<string, Command> = {
         if (named.has(m[1]!)) throw new ToolError(`${m[1]} is named twice`)
         named.set(m[1]!, m[2]!)
       }
-      const { lines, inputs, moved } = await updateLocks(root(), named, check)
+      const { lines, inputs, moved, names } = await updateLocks(root(), named, check)
       for (const line of lines) io.out(line)
+      if (!check) afterUpdate(root(), names)
       if (check && moved > 0) throw new ToolError(`${moved} of ${inputs} inputs would move; mica-tools locks update${args.slice(1).map(a => ` ${a}`).join('')} moves them`)
     },
   },
